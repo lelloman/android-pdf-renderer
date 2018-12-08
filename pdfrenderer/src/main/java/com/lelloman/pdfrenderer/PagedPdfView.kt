@@ -5,15 +5,17 @@ import android.graphics.Bitmap
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.ImageView
 import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.PublishSubject
-import java.util.*
 
 class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, attrs), PdfView {
 
@@ -33,9 +35,7 @@ class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, a
             val imageView = view.findViewById<ImageView>(R.id.pageImageView)
             val layoutObserver = object : ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
-                    val bitmap = Bitmap.createBitmap(imageView.width, imageView.height, Bitmap.Config.ARGB_8888)
-                    pdfDocument?.render(bitmap, position)
-                    imageView.setImageBitmap(bitmap)
+                    renderPageIntoImageView(position, imageView)
                     imageView.viewTreeObserver.removeOnGlobalLayoutListener(this)
                 }
             }
@@ -54,8 +54,9 @@ class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, a
     override val visiblePage: Observable<Int> = visiblePageSubject.hide().distinctUntilChanged()
 
     init {
+        offscreenPageLimit = 2
         setAdapter(adapter)
-        addOnPageChangeListener(object : OnPageChangeListener{
+        addOnPageChangeListener(object : OnPageChangeListener {
             override fun onPageScrollStateChanged(p0: Int) {
             }
 
@@ -68,10 +69,28 @@ class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, a
         })
     }
 
+    private fun renderPageIntoImageView(pageIndex: Int, imageView: ImageView) = Single
+        .fromCallable {
+            Bitmap.createBitmap(imageView.width, imageView.height, Bitmap.Config.ARGB_8888).apply {
+                pdfDocument?.render(this, pageIndex)
+            }
+        }
+        .subscribeOn(Schedulers.newThread())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe({
+            imageView.setImageBitmap(it)
+        }, {
+            Log.e(TAG, "Error while creating Bitmap and rendering page", it)
+        })
+
     override fun setPdfDocument(pdfDocument: PdfDocument) {
         this.pdfDocument = pdfDocument
         adapter.notifyDataSetChanged()
         setCurrentItem(0, false)
         visiblePageSubject.onNext(0)
+    }
+
+    private companion object {
+        val TAG = PagedPdfView::class.java.simpleName
     }
 }

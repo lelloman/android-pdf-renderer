@@ -21,7 +21,7 @@ class PdfDocumentImpl(parcelFileDescriptor: ParcelFileDescriptor) : PdfDocument 
         }
     }
 
-    override fun render(bitmap: Bitmap, pageIndex: Int) {
+    override fun render(bitmap: Bitmap, pageIndex: Int) = synchronized(pdfRenderer){
         val page = pdfRenderer.openPage(pageIndex)
         val pageRatio = page.width / page.height.toFloat()
         val bitmapRatio = bitmap.width / bitmap.height.toFloat()
