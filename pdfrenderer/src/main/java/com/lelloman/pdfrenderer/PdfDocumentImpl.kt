@@ -21,11 +21,11 @@ class PdfDocumentImpl(parcelFileDescriptor: ParcelFileDescriptor) : PdfDocument 
         }
     }
 
-    override fun render(bitmap: Bitmap, pageIndex: Int) = synchronized(pdfRenderer){
+    override fun render(bitmap: Bitmap, pageIndex: Int) = synchronized(pdfRenderer) {
         val page = pdfRenderer.openPage(pageIndex)
         val pageRatio = page.width / page.height.toFloat()
         val bitmapRatio = bitmap.width / bitmap.height.toFloat()
-        val (destWidth, destHeight) = if(pageRatio > bitmapRatio) {
+        val (destWidth, destHeight) = if (pageRatio > bitmapRatio) {
             bitmap.width to round(bitmap.width / pageRatio)
         } else {
             round(bitmap.height * pageRatio) to bitmap.height
@@ -43,7 +43,7 @@ class PdfDocumentImpl(parcelFileDescriptor: ParcelFileDescriptor) : PdfDocument 
         page.close()
     }
 
-    override fun dispose() {
+    override fun dispose() = synchronized(pdfRenderer) {
         pdfRenderer.close()
     }
 }
