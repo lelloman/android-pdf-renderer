@@ -21,8 +21,9 @@ import java.util.concurrent.TimeUnit
 
 class ScrolledPdfView @JvmOverloads constructor(
     context: Context,
-    attrs: AttributeSet? = null
-) : RecyclerView(context, attrs), PdfView {
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0
+) : RecyclerView(context, attrs, defStyle), PdfView {
 
     override var orientation = PdfView.Orientation.VERTICAL
         set(value) {

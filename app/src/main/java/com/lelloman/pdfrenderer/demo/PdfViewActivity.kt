@@ -1,27 +1,23 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.support.v7.app.AppCompatActivity
+import android.view.MenuItem
 import android.view.View
+import com.lelloman.pdfrenderer.FullPdfView
 import com.lelloman.pdfrenderer.PdfDocumentImpl
 import com.lelloman.pdfrenderer.PdfView
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.subjects.BehaviorSubject
 import java.io.File
 
 class PdfViewActivity : AppCompatActivity() {
 
-    private val pdfView by lazy { findViewById<View>(R.id.pdfView) as PdfView }
-
-    private val layoutResId: Int
-        get() = when (intent.getStringExtra(EXTRA_VIEW_TYPE)) {
-            VIEW_TYPE_PAGED -> R.layout.activity_paged
-            VIEW_TYPE_SCROLLED -> R.layout.activity_scrolled
-            else -> throw IllegalArgumentException("Invalid value set for Intent extra $EXTRA_VIEW_TYPE")
-        }
-
+    private val pdfView by lazy { findViewById<FullPdfView>(R.id.pdfView) }
     private val subscriptions = CompositeDisposable()
 
     private val document by lazy {
@@ -33,10 +29,28 @@ class PdfViewActivity : AppCompatActivity() {
         PdfDocumentImpl(ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY))
     }
 
+    private val toolbarController by lazy { ToolbarController() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(layoutResId)
+        supportActionBar?.hide()
+        setContentView(R.layout.activity_pdf)
         pdfView.setPdfDocument(document)
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.actionHorizontal -> {
+            pdfView.orientation = PdfView.Orientation.HORIZONTAL
+            invalidateOptionsMenu()
+            true
+        }
+        R.id.actionVertical -> {
+            pdfView.orientation = PdfView.Orientation.VERTICAL
+            invalidateOptionsMenu()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onStart() {
@@ -44,6 +58,14 @@ class PdfViewActivity : AppCompatActivity() {
         subscriptions.add(pdfView.visiblePage.subscribe {
             title = "${1 + it}/${document.pageCount}"
         })
+        subscriptions.add(
+            toolbarController
+                .orientation
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    pdfView.orientation = it
+                }
+        )
     }
 
     override fun onStop() {
@@ -56,23 +78,26 @@ class PdfViewActivity : AppCompatActivity() {
         document.dispose()
     }
 
-    companion object {
-        private const val EXTRA_VIEW_TYPE = "ViewType"
-        private const val VIEW_TYPE_PAGED = "Paged"
-        private const val VIEW_TYPE_SCROLLED = "Scrolled"
+    private inner class ToolbarController {
 
-        fun startPaged(activity: Activity) {
-            activity.startActivity(
-                Intent(activity, PdfViewActivity::class.java)
-                    .putExtra(EXTRA_VIEW_TYPE, VIEW_TYPE_PAGED)
-            )
-        }
+        private val verticalImageView = findViewById<View>(R.id.imageViewVertical)
+        private val horizontalImageView = findViewById<View>(R.id.imageViewHorizontal)
 
-        fun startScrolled(activity: Activity) {
-            activity.startActivity(
-                Intent(activity, PdfViewActivity::class.java)
-                    .putExtra(EXTRA_VIEW_TYPE, VIEW_TYPE_SCROLLED)
-            )
+        private val orientationSubject = BehaviorSubject
+            .createDefault(this@PdfViewActivity.pdfView.orientation)
+
+        val orientation: Flowable<PdfView.Orientation> = orientationSubject
+            .hide()
+            .toFlowable(BackpressureStrategy.LATEST)
+            .distinctUntilChanged()
+            .doOnNext {
+                verticalImageView.alpha = if (it == PdfView.Orientation.VERTICAL) 1f else .4f
+                horizontalImageView.alpha = if (it == PdfView.Orientation.HORIZONTAL) 1f else .4f
+            }
+
+        init {
+            verticalImageView.setOnClickListener { orientationSubject.onNext(PdfView.Orientation.VERTICAL) }
+            horizontalImageView.setOnClickListener { orientationSubject.onNext(PdfView.Orientation.HORIZONTAL) }
         }
     }
 }
