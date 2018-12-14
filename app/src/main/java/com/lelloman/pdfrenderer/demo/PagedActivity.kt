@@ -9,13 +9,14 @@ import com.lelloman.pdfrenderer.PdfView
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
 
-class MainActivity : AppCompatActivity() {
+class PagedActivity : AppCompatActivity() {
 
     private val pdfView by lazy { findViewById<View>(R.id.pdfView) as PdfView }
     private val document by lazy {
         val pdfFile = File(filesDir, "ppp.pdf")
+        if (pdfFile.exists()) pdfFile.delete()
         if (!pdfFile.exists()) {
-            assets.open("bach_pastorale.pdf").buffered().copyTo(pdfFile.outputStream())
+            assets.open("test.pdf").buffered().copyTo(pdfFile.outputStream())
         }
         PdfDocumentImpl(ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY))
     }
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_paged)
 
         pdfView.setPdfDocument(document)
     }

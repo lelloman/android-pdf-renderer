@@ -17,7 +17,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 
-class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, attrs), PdfView {
+class PagedPdfView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : ViewPager(context, attrs), PdfView {
 
     private var pdfDocument: PdfDocument? = null
 
@@ -32,7 +35,7 @@ class PagedPdfView(context: Context, attrs: AttributeSet) : ViewPager(context, a
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = layoutInflater.inflate(R.layout.paged_pdf_view_item, container, false)
 
-            val imageView = view.findViewById<ImageView>(R.id.pageImageView)
+            val imageView = view.findViewById<ImageView>(R.id.imageView)
             val layoutObserver = object : ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
                     renderPageIntoImageView(position, imageView)
