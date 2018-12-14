@@ -1,6 +1,5 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -13,10 +12,10 @@ class ChooseModeActivity : AppCompatActivity() {
     }
 
     fun openPaged(view: View) {
-        startActivity(Intent(this, PagedActivity::class.java))
+        PdfViewActivity.startPaged(this)
     }
 
     fun openScrolled(view: View) {
-        startActivity(Intent(this, ScrolledActivity::class.java))
+        PdfViewActivity.startScrolled(this)
     }
 }

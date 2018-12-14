@@ -1,5 +1,7 @@
 package com.lelloman.pdfrenderer.demo
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.support.v7.app.AppCompatActivity
@@ -9,9 +11,19 @@ import com.lelloman.pdfrenderer.PdfView
 import io.reactivex.disposables.CompositeDisposable
 import java.io.File
 
-class PagedActivity : AppCompatActivity() {
+class PdfViewActivity : AppCompatActivity() {
 
     private val pdfView by lazy { findViewById<View>(R.id.pdfView) as PdfView }
+
+    private val layoutResId: Int
+        get() = when (intent.getStringExtra(EXTRA_VIEW_TYPE)) {
+            VIEW_TYPE_PAGED -> R.layout.activity_paged
+            VIEW_TYPE_SCROLLED -> R.layout.activity_scrolled
+            else -> throw IllegalArgumentException("Invalid value set for Intent extra $EXTRA_VIEW_TYPE")
+        }
+
+    private val subscriptions = CompositeDisposable()
+
     private val document by lazy {
         val pdfFile = File(filesDir, "ppp.pdf")
         if (pdfFile.exists()) pdfFile.delete()
@@ -21,14 +33,12 @@ class PagedActivity : AppCompatActivity() {
         PdfDocumentImpl(ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY))
     }
 
-    private val subscriptions = CompositeDisposable()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_paged)
-
+        setContentView(layoutResId)
         pdfView.setPdfDocument(document)
     }
+
 
     override fun onStart() {
         super.onStart()
@@ -45,5 +55,25 @@ class PagedActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         document.dispose()
+    }
+
+    companion object {
+        private const val EXTRA_VIEW_TYPE = "ViewType"
+        private const val VIEW_TYPE_PAGED = "Paged"
+        private const val VIEW_TYPE_SCROLLED = "Scrolled"
+
+        fun startPaged(activity: Activity) {
+            activity.startActivity(
+                Intent(activity, PdfViewActivity::class.java)
+                    .putExtra(EXTRA_VIEW_TYPE, VIEW_TYPE_PAGED)
+            )
+        }
+
+        fun startScrolled(activity: Activity) {
+            activity.startActivity(
+                Intent(activity, PdfViewActivity::class.java)
+                    .putExtra(EXTRA_VIEW_TYPE, VIEW_TYPE_SCROLLED)
+            )
+        }
     }
 }

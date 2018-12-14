@@ -4,12 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
+import android.support.v4.view.ViewPager.PageTransformer
 import android.util.AttributeSet
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
+import android.view.*
 import android.widget.ImageView
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -17,14 +15,39 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 
+
 class PagedPdfView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : ViewPager(context, attrs), PdfView {
 
+    override var orientation = PdfView.Orientation.HORIZONTAL
+        set(value) {
+            field = value
+            onOrientationSet()
+        }
+
     private var pdfDocument: PdfDocument? = null
 
     private val layoutInflater = LayoutInflater.from(context)
+
+    private val horizontalPageTransformer = PageTransformer { _, _ -> }
+
+    private val verticalPageTransformer = PageTransformer { view, position ->
+        view.translationX = view.width * position * -1
+        view.translationY = position * view.height
+    }
+
+    private val horizontalMotionEventHandler: (MotionEvent) -> MotionEvent = { it }
+
+    private val verticalMotionEventHandler: (MotionEvent) -> MotionEvent = {
+        it.apply {
+            val ratio = width.toFloat() / height
+            setLocation(y * ratio, x / ratio)
+        }
+    }
+
+    private var adjustedMotionEvent: (MotionEvent) -> MotionEvent = horizontalMotionEventHandler
 
     private val adapter = object : PagerAdapter() {
 
@@ -33,16 +56,17 @@ class PagedPdfView @JvmOverloads constructor(
         override fun getCount() = pdfDocument?.pageCount ?: 0
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
-            val view = layoutInflater.inflate(R.layout.paged_pdf_view_item, container, false)
+            val view = layoutInflater.inflate(R.layout.pdf_view_item, container, false)
 
             val imageView = view.findViewById<ImageView>(R.id.imageView)
+            val progressBar = view.findViewById<View>(R.id.progressBar)
             val layoutObserver = object : ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
-                    renderPageIntoImageView(position, imageView)
-                    imageView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    renderPageIntoImageView(position, view, imageView, progressBar)
+                    view.viewTreeObserver.removeOnGlobalLayoutListener(this)
                 }
             }
-            imageView.viewTreeObserver.addOnGlobalLayoutListener(layoutObserver)
+            view.viewTreeObserver.addOnGlobalLayoutListener(layoutObserver)
             container.addView(view)
             return view
         }
@@ -57,6 +81,18 @@ class PagedPdfView @JvmOverloads constructor(
     override val visiblePage: Observable<Int> = visiblePageSubject.hide().distinctUntilChanged()
 
     init {
+        if (attrs != null) {
+            val a = context.obtainStyledAttributes(attrs, R.styleable.PdfView)
+            try {
+                val orientationInt = a.getInt(R.styleable.PdfView_orientation, orientation.attrValue)
+                orientation = PdfView.Orientation.values().first { it.attrValue == orientationInt }
+            } catch (exception: Throwable) {
+
+            } finally {
+                a.recycle()
+            }
+        }
+
         offscreenPageLimit = 2
         setAdapter(adapter)
         addOnPageChangeListener(object : OnPageChangeListener {
@@ -70,27 +106,55 @@ class PagedPdfView @JvmOverloads constructor(
                 visiblePageSubject.onNext(pageIndex)
             }
         })
+
+        onOrientationSet()
     }
 
-    private fun renderPageIntoImageView(pageIndex: Int, imageView: ImageView) = Single
-        .fromCallable {
-            Bitmap.createBitmap(imageView.width, imageView.height, Bitmap.Config.ARGB_8888).apply {
-                pdfDocument?.render(this, pageIndex)
+    private fun onOrientationSet() {
+        val (pageTransformer, motionEventTransformer) = when (orientation) {
+            PdfView.Orientation.HORIZONTAL -> {
+                horizontalPageTransformer to horizontalMotionEventHandler
+            }
+            PdfView.Orientation.VERTICAL -> {
+                verticalPageTransformer to verticalMotionEventHandler
             }
         }
-        .subscribeOn(Schedulers.newThread())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe({
-            imageView.setImageBitmap(it)
-        }, {
-            Log.e(TAG, "Error while creating Bitmap and rendering page", it)
-        })
+        setPageTransformer(true, pageTransformer)
+        adjustedMotionEvent = motionEventTransformer
+    }
+
+    private fun renderPageIntoImageView(pageIndex: Int, container: View, imageView: ImageView, progressBar: View) =
+        Single
+            .fromCallable {
+                Bitmap.createBitmap(container.width, container.height, Bitmap.Config.ARGB_8888).apply {
+                    pdfDocument?.render(this, pageIndex)
+                }
+            }
+            .subscribeOn(Schedulers.newThread())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                imageView.setImageBitmap(it)
+                imageView.visibility = View.VISIBLE
+                progressBar.visibility = View.GONE
+            }, {
+                Log.e(TAG, "Error while creating Bitmap and rendering page", it)
+            })
 
     override fun setPdfDocument(pdfDocument: PdfDocument) {
         this.pdfDocument = pdfDocument
         adapter.notifyDataSetChanged()
         setCurrentItem(0, false)
         visiblePageSubject.onNext(0)
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        val intercepted = super.onInterceptTouchEvent(adjustedMotionEvent(ev))
+        adjustedMotionEvent(ev)
+        return intercepted
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        return super.onTouchEvent(adjustedMotionEvent(ev))
     }
 
     private companion object {

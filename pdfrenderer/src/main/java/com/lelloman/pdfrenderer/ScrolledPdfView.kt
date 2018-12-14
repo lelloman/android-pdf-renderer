@@ -23,6 +23,12 @@ class ScrolledPdfView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : RecyclerView(context, attrs), PdfView {
 
+    override var orientation = PdfView.Orientation.VERTICAL
+        set(value) {
+            field = value
+            (layoutManager as LinearLayoutManager).orientation = value.asLayoutManagerValue()
+        }
+
     private var pdfDocument: PdfDocument? = null
 
     private val layoutInflater = LayoutInflater.from(context)
@@ -37,7 +43,7 @@ class ScrolledPdfView @JvmOverloads constructor(
 
     private val adapterImpl = object : Adapter<ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = layoutInflater
-            .inflate(R.layout.scrolled_pdf_view_item, parent, false)
+            .inflate(R.layout.pdf_view_item, parent, false)
             .let(::ViewHolder)
 
         override fun getItemCount() = pdfDocument?.pageCount ?: 0
@@ -53,8 +59,20 @@ class ScrolledPdfView @JvmOverloads constructor(
     }
 
     init {
-        layoutManager = LinearLayoutManager(context)
-        adapter = adapterImpl
+        if (attrs != null) {
+            val a = context.obtainStyledAttributes(attrs, R.styleable.PdfView)
+            try {
+                val orientationInt = a.getInt(R.styleable.PdfView_orientation, orientation.attrValue)
+                orientation = PdfView.Orientation.values().first { it.attrValue == orientationInt }
+            } catch (exception: Throwable) {
+
+            } finally {
+                a.recycle()
+            }
+        }
+
+        layoutManager = LinearLayoutManager(context, orientation.asLayoutManagerValue(), false)
+        super.setAdapter(adapterImpl)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -93,6 +111,11 @@ class ScrolledPdfView @JvmOverloads constructor(
             }
             .subscribeOn(Schedulers.io())
             .subscribe()
+    }
+
+    private fun PdfView.Orientation.asLayoutManagerValue() = when (this) {
+        PdfView.Orientation.HORIZONTAL -> LinearLayoutManager.HORIZONTAL
+        PdfView.Orientation.VERTICAL -> LinearLayoutManager.VERTICAL
     }
 
     private class Size(val width: Int, val height: Int) {
