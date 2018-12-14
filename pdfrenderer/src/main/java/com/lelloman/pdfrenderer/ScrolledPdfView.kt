@@ -9,8 +9,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import io.reactivex.BackpressureStrategy
 import io.reactivex.Completable
-import io.reactivex.Observable
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -26,7 +27,7 @@ class ScrolledPdfView @JvmOverloads constructor(
     override var orientation = PdfView.Orientation.VERTICAL
         set(value) {
             field = value
-            (layoutManager as LinearLayoutManager).orientation = value.asLayoutManagerValue()
+            linearLayoutManger.orientation = value.asLayoutManagerValue()
         }
 
     private var pdfDocument: PdfDocument? = null
@@ -35,7 +36,10 @@ class ScrolledPdfView @JvmOverloads constructor(
 
     private val visiblePageSubject = BehaviorSubject.create<Int>()
 
-    override val visiblePage: Observable<Int> = visiblePageSubject.hide()
+    override val visiblePage: Flowable<Int> = visiblePageSubject
+        .hide()
+        .toFlowable(BackpressureStrategy.LATEST)
+        .distinctUntilChanged()
 
     private var targetSize = BehaviorSubject.createDefault(Size(0, 0))
 
@@ -58,6 +62,8 @@ class ScrolledPdfView @JvmOverloads constructor(
         }
     }
 
+    private val linearLayoutManger = LinearLayoutManager(context, orientation.asLayoutManagerValue(), false)
+
     init {
         if (attrs != null) {
             val a = context.obtainStyledAttributes(attrs, R.styleable.PdfView)
@@ -71,8 +77,20 @@ class ScrolledPdfView @JvmOverloads constructor(
             }
         }
 
-        layoutManager = LinearLayoutManager(context, orientation.asLayoutManagerValue(), false)
-        super.setAdapter(adapterImpl)
+        layoutManager = linearLayoutManger
+        adapter = adapterImpl
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        val offset = computeVerticalScrollOffset()
+        val pageCount = pdfDocument?.pageCount ?: 0
+        val item = if (pageCount < 1) {
+            0
+        } else {
+            (height / 2 + offset) / height
+        }
+        visiblePageSubject.onNext(item)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

@@ -1,12 +1,12 @@
 package com.lelloman.pdfrenderer
 
-import io.reactivex.Observable
+import io.reactivex.Flowable
 
 interface PdfView {
 
     var orientation: Orientation
 
-    val visiblePage: Observable<Int>
+    val visiblePage: Flowable<Int>
 
     fun setPdfDocument(pdfDocument: PdfDocument)
 

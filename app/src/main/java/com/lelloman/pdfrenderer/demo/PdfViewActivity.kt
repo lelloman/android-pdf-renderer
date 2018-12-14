@@ -39,11 +39,10 @@ class PdfViewActivity : AppCompatActivity() {
         pdfView.setPdfDocument(document)
     }
 
-
     override fun onStart() {
         super.onStart()
         subscriptions.add(pdfView.visiblePage.subscribe {
-            title = "$it/${document.pageCount}"
+            title = "${1 + it}/${document.pageCount}"
         })
     }
 

@@ -9,7 +9,8 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
-import io.reactivex.Observable
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -78,7 +79,10 @@ class PagedPdfView @JvmOverloads constructor(
 
     private val visiblePageSubject = BehaviorSubject.create<Int>()
 
-    override val visiblePage: Observable<Int> = visiblePageSubject.hide().distinctUntilChanged()
+    override val visiblePage: Flowable<Int> = visiblePageSubject
+        .hide()
+        .toFlowable(BackpressureStrategy.LATEST)
+        .distinctUntilChanged()
 
     init {
         if (attrs != null) {
