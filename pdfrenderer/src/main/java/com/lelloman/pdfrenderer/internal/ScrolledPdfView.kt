@@ -75,12 +75,19 @@ internal class ScrolledPdfView(context: Context) : RecyclerView(context), Intern
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
-        val offset = computeVerticalScrollOffset()
         val pageCount = pdfDocument?.pageCount ?: 0
         val item = if (pageCount < 1) {
             0
         } else {
-            (height / 2 + offset) / height
+            val (offset, edgeLength) = when (orientation) {
+                PdfViewOrientation.VERTICAL -> {
+                    computeVerticalScrollOffset() to height
+                }
+                PdfViewOrientation.HORIZONTAL -> {
+                    computeHorizontalScrollOffset() to width
+                }
+            }
+            (edgeLength / 2 + offset) / edgeLength
         }
         visiblePageSubject.onNext(item)
     }
