@@ -5,6 +5,7 @@ import android.os.ParcelFileDescriptor
 import android.support.v7.app.AppCompatActivity
 import android.view.MenuItem
 import android.view.View
+import android.widget.TextView
 import com.lelloman.pdfrenderer.FullPdfView
 import com.lelloman.pdfrenderer.PdfDocumentImpl
 import com.lelloman.pdfrenderer.PdfView
@@ -56,7 +57,7 @@ class PdfViewActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         subscriptions.add(pdfView.visiblePage.subscribe {
-            title = "${1 + it}/${document.pageCount}"
+            toolbarController.setCurrentPageIndex(it)
         })
         subscriptions.add(
             toolbarController
@@ -64,6 +65,14 @@ class PdfViewActivity : AppCompatActivity() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe {
                     pdfView.orientation = it
+                }
+        )
+        subscriptions.add(
+            toolbarController
+                .style
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    pdfView.style = it
                 }
         )
     }
@@ -80,11 +89,19 @@ class PdfViewActivity : AppCompatActivity() {
 
     private inner class ToolbarController {
 
+        private val pageNumberTextView = findViewById<TextView>(R.id.textViewPageNumber)
+
         private val verticalImageView = findViewById<View>(R.id.imageViewVertical)
         private val horizontalImageView = findViewById<View>(R.id.imageViewHorizontal)
 
+        private val scrolledTextView = findViewById<View>(R.id.textViewScrolled)
+        private val pagedTextView = findViewById<View>(R.id.textViewPaged)
+
         private val orientationSubject = BehaviorSubject
             .createDefault(this@PdfViewActivity.pdfView.orientation)
+
+        private val styleSubject = BehaviorSubject
+            .createDefault(this@PdfViewActivity.pdfView.style)
 
         val orientation: Flowable<PdfView.Orientation> = orientationSubject
             .hide()
@@ -95,9 +112,24 @@ class PdfViewActivity : AppCompatActivity() {
                 horizontalImageView.alpha = if (it == PdfView.Orientation.HORIZONTAL) 1f else .4f
             }
 
+        val style: Flowable<FullPdfView.Style> = styleSubject
+            .hide()
+            .toFlowable(BackpressureStrategy.LATEST)
+            .distinctUntilChanged()
+            .doOnNext {
+                pagedTextView.alpha = if (it == FullPdfView.Style.PAGED) 1f else .4f
+                scrolledTextView.alpha = if (it == FullPdfView.Style.SCROLLED) 1f else .4f
+            }
+
         init {
             verticalImageView.setOnClickListener { orientationSubject.onNext(PdfView.Orientation.VERTICAL) }
             horizontalImageView.setOnClickListener { orientationSubject.onNext(PdfView.Orientation.HORIZONTAL) }
+            pagedTextView.setOnClickListener { styleSubject.onNext(FullPdfView.Style.PAGED) }
+            scrolledTextView.setOnClickListener { styleSubject.onNext(FullPdfView.Style.SCROLLED) }
+        }
+
+        fun setCurrentPageIndex(pageIndex: Int) {
+            pageNumberTextView.text = "${pageIndex + 1}/${document.pageCount}"
         }
     }
 }

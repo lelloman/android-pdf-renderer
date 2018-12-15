@@ -77,7 +77,7 @@ class PagedPdfView @JvmOverloads constructor(
         }
     }
 
-    private val visiblePageSubject = BehaviorSubject.create<Int>()
+    private val visiblePageSubject = BehaviorSubject.createDefault(0)
 
     override val visiblePage: Flowable<Int> = visiblePageSubject
         .hide()
@@ -112,6 +112,11 @@ class PagedPdfView @JvmOverloads constructor(
         })
 
         onOrientationSet()
+    }
+
+    override fun showPage(pageIndex: Int) {
+        visiblePageSubject.onNext(pageIndex)
+        setCurrentItem(pageIndex, false)
     }
 
     private fun onOrientationSet() {

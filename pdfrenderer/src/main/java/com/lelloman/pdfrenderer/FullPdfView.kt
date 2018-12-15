@@ -57,7 +57,12 @@ class FullPdfView @JvmOverloads constructor(
         activePdfView.setPdfDocument(document)
     }
 
+    override fun showPage(pageIndex: Int) {
+        activePdfView.showPage(pageIndex)
+    }
+
     private fun onStyleChanged() {
+        val visiblePage = activePdfView.visiblePage.blockingFirst()
         activeView.visibility = GONE
         activePdfView.setPdfDocument(PdfDocument.STUB)
 
@@ -67,6 +72,7 @@ class FullPdfView @JvmOverloads constructor(
         }
         activeView.visibility = View.VISIBLE
         activePdfView.setPdfDocument(document)
+        activePdfView.showPage(visiblePage)
     }
 
     enum class Style {

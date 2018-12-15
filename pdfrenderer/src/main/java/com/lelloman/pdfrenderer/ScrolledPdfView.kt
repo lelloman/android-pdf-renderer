@@ -35,7 +35,7 @@ class ScrolledPdfView @JvmOverloads constructor(
 
     private val layoutInflater = LayoutInflater.from(context)
 
-    private val visiblePageSubject = BehaviorSubject.create<Int>()
+    private val visiblePageSubject = BehaviorSubject.createDefault(0)
 
     override val visiblePage: Flowable<Int> = visiblePageSubject
         .hide()
@@ -80,6 +80,11 @@ class ScrolledPdfView @JvmOverloads constructor(
 
         layoutManager = linearLayoutManger
         adapter = adapterImpl
+    }
+
+    override fun showPage(pageIndex: Int) {
+        visiblePageSubject.onNext(pageIndex)
+        linearLayoutManger.scrollToPosition(pageIndex)
     }
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {

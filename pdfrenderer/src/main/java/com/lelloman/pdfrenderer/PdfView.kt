@@ -10,6 +10,8 @@ interface PdfView {
 
     fun setPdfDocument(pdfDocument: PdfDocument)
 
+    fun showPage(pageIndex: Int)
+
     enum class Orientation(val attrValue: Int) {
         HORIZONTAL(0),
         VERTICAL(1);
