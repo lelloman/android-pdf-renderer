@@ -1,14 +1,16 @@
-package com.lelloman.pdfrenderer
+package com.lelloman.pdfrenderer.internal
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.lelloman.pdfrenderer.PdfDocument
+import com.lelloman.pdfrenderer.PdfViewOrientation
+import com.lelloman.pdfrenderer.R
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Completable
 import io.reactivex.Flowable
@@ -19,13 +21,9 @@ import io.reactivex.subjects.BehaviorSubject
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class ScrolledPdfView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyle: Int = 0
-) : RecyclerView(context, attrs, defStyle), PdfView {
+internal class ScrolledPdfView(context: Context) : RecyclerView(context), InternalPdfView {
 
-    override var orientation = PdfView.Orientation.VERTICAL
+    override var orientation = PdfViewOrientation.VERTICAL
         set(value) {
             field = value
             linearLayoutManger.orientation = value.asLayoutManagerValue()
@@ -47,9 +45,9 @@ class ScrolledPdfView @JvmOverloads constructor(
     private val bitmapCache = LinkedList<Bitmap>()
 
     private val adapterImpl = object : Adapter<ViewHolder>() {
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = layoutInflater
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = layoutInflater
             .inflate(R.layout.pdf_view_item, parent, false)
-            .let(::ViewHolder)
+            .let { ViewHolder(it) }
 
         override fun getItemCount() = pdfDocument?.pageCount ?: 0
 
@@ -66,18 +64,6 @@ class ScrolledPdfView @JvmOverloads constructor(
     private val linearLayoutManger = LinearLayoutManager(context, orientation.asLayoutManagerValue(), false)
 
     init {
-        if (attrs != null) {
-            val a = context.obtainStyledAttributes(attrs, R.styleable.PdfView)
-            try {
-                val orientationInt = a.getInt(R.styleable.PdfView_orientation, orientation.attrValue)
-                orientation = PdfView.Orientation.values().first { it.attrValue == orientationInt }
-            } catch (exception: Throwable) {
-
-            } finally {
-                a.recycle()
-            }
-        }
-
         layoutManager = linearLayoutManger
         adapter = adapterImpl
     }
@@ -137,16 +123,16 @@ class ScrolledPdfView @JvmOverloads constructor(
             .subscribe()
     }
 
-    private fun PdfView.Orientation.asLayoutManagerValue() = when (this) {
-        PdfView.Orientation.HORIZONTAL -> LinearLayoutManager.HORIZONTAL
-        PdfView.Orientation.VERTICAL -> LinearLayoutManager.VERTICAL
+    private fun PdfViewOrientation.asLayoutManagerValue() = when (this) {
+        PdfViewOrientation.HORIZONTAL -> LinearLayoutManager.HORIZONTAL
+        PdfViewOrientation.VERTICAL -> LinearLayoutManager.VERTICAL
     }
 
     private class Size(val width: Int, val height: Int) {
         val hasSurface = width > 0 && height > 0
     }
 
-    private inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    internal inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
         private val imageView = view.findViewById<ImageView>(R.id.imageView)
         private val progressBar = view.findViewById<View>(R.id.progressBar)

@@ -1,14 +1,17 @@
-package com.lelloman.pdfrenderer
+package com.lelloman.pdfrenderer.internal
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v4.view.ViewPager.PageTransformer
-import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
+import com.lelloman.pdfrenderer.PdfDocument
+import com.lelloman.pdfrenderer.PdfViewOrientation
+import com.lelloman.pdfrenderer.R
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.Single
@@ -17,12 +20,9 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 
 
-class PagedPdfView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null
-) : ViewPager(context, attrs), PdfView {
+internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfView {
 
-    override var orientation = PdfView.Orientation.HORIZONTAL
+    override var orientation = PdfViewOrientation.HORIZONTAL
         set(value) {
             field = value
             onOrientationSet()
@@ -85,18 +85,6 @@ class PagedPdfView @JvmOverloads constructor(
         .distinctUntilChanged()
 
     init {
-        if (attrs != null) {
-            val a = context.obtainStyledAttributes(attrs, R.styleable.PdfView)
-            try {
-                val orientationInt = a.getInt(R.styleable.PdfView_orientation, orientation.attrValue)
-                orientation = PdfView.Orientation.values().first { it.attrValue == orientationInt }
-            } catch (exception: Throwable) {
-
-            } finally {
-                a.recycle()
-            }
-        }
-
         offscreenPageLimit = 2
         setAdapter(adapter)
         addOnPageChangeListener(object : OnPageChangeListener {
@@ -121,10 +109,10 @@ class PagedPdfView @JvmOverloads constructor(
 
     private fun onOrientationSet() {
         val (pageTransformer, motionEventTransformer) = when (orientation) {
-            PdfView.Orientation.HORIZONTAL -> {
+            PdfViewOrientation.HORIZONTAL -> {
                 horizontalPageTransformer to horizontalMotionEventHandler
             }
-            PdfView.Orientation.VERTICAL -> {
+            PdfViewOrientation.VERTICAL -> {
                 verticalPageTransformer to verticalMotionEventHandler
             }
         }
@@ -146,7 +134,7 @@ class PagedPdfView @JvmOverloads constructor(
                 imageView.visibility = View.VISIBLE
                 progressBar.visibility = View.GONE
             }, {
-                Log.e(TAG, "Error while creating Bitmap and rendering page", it)
+                Log.e(PagedPdfView::class.java.simpleName, "Error while creating Bitmap and rendering page", it)
             })
 
     override fun setPdfDocument(pdfDocument: PdfDocument) {
@@ -162,11 +150,8 @@ class PagedPdfView @JvmOverloads constructor(
         return intercepted
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(ev: MotionEvent): Boolean {
         return super.onTouchEvent(adjustedMotionEvent(ev))
-    }
-
-    private companion object {
-        val TAG = PagedPdfView::class.java.simpleName
     }
 }

@@ -1,13 +1,14 @@
-package com.lelloman.pdfrenderer
+package com.lelloman.pdfrenderer.internal
 
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import com.lelloman.pdfrenderer.PdfDocument
 import java.io.IOException
 import java.lang.Math.*
 
-class PdfDocumentImpl(parcelFileDescriptor: ParcelFileDescriptor) : PdfDocument {
+internal class PdfDocumentImpl(parcelFileDescriptor: ParcelFileDescriptor) : PdfDocument {
 
     private val pdfRenderer: PdfRenderer
 

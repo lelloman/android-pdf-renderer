@@ -1,19 +1,80 @@
 package com.lelloman.pdfrenderer
 
+import android.content.Context
+import android.util.AttributeSet
+import android.view.View
+import android.widget.FrameLayout
+import com.lelloman.pdfrenderer.internal.InternalPdfView
+import com.lelloman.pdfrenderer.internal.PagedPdfView
+import com.lelloman.pdfrenderer.internal.ScrolledPdfView
 import io.reactivex.Flowable
 
-interface PdfView {
+class PdfView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : FrameLayout(context, attrs) {
 
-    var orientation: Orientation
+    var document = PdfDocument.STUB
+        set(value) {
+            if (field == value) return
+            field = value
+            activePdfView.setPdfDocument(value)
+        }
 
-    val visiblePage: Flowable<Int>
+    var style: PdfViewStyle = PdfViewStyle.PAGED
+        set(value) {
+            if (value == field) return
+            field = value
+            onStyleChanged()
+        }
 
-    fun setPdfDocument(pdfDocument: PdfDocument)
+    var orientation = PdfViewOrientation.VERTICAL
+        set(value) {
+            field = value
+            scrolled.orientation = value
+            paged.orientation = value
+        }
 
-    fun showPage(pageIndex: Int)
+    private val paged = PagedPdfView(context).apply {
+        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        orientation = this@PdfView.orientation
+        visibility = GONE
+    }
 
-    enum class Orientation(val attrValue: Int) {
-        HORIZONTAL(0),
-        VERTICAL(1);
+    private val scrolled = ScrolledPdfView(context).apply {
+        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        orientation = this@PdfView.orientation
+        visibility = GONE
+    }
+
+    val visiblePage: Flowable<Int> = Flowable
+        .merge(paged.visiblePage, scrolled.visiblePage)
+        .distinctUntilChanged()
+
+    private var activePdfView: InternalPdfView = paged
+    private val activeView get() = activePdfView as View
+
+    init {
+        addView(paged)
+        addView(scrolled)
+        onStyleChanged()
+    }
+
+    fun showPage(pageIndex: Int) {
+        activePdfView.showPage(pageIndex)
+    }
+
+    private fun onStyleChanged() {
+        val visiblePage = activePdfView.visiblePage.blockingFirst()
+        activeView.visibility = GONE
+        activePdfView.setPdfDocument(PdfDocument.STUB)
+
+        activePdfView = when (style) {
+            PdfViewStyle.PAGED -> paged
+            PdfViewStyle.SCROLLED -> scrolled
+        }
+        activeView.visibility = View.VISIBLE
+        activePdfView.setPdfDocument(document)
+        activePdfView.showPage(visiblePage)
     }
 }

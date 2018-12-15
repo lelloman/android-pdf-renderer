@@ -7,7 +7,7 @@
 
     <include layout="@layout/view_controls"/>
 
-    <com.lelloman.pdfrenderer.FullPdfView
+    <com.lelloman.pdfrenderer.PdfView
             android:id="@+id/pdfView"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -17,5 +17,5 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:orientation="vertical">
 
-    </com.lelloman.pdfrenderer.FullPdfView>
+    </com.lelloman.pdfrenderer.PdfView>
 </android.support.constraint.ConstraintLayout>
