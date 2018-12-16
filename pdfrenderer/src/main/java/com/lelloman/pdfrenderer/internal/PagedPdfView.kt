@@ -32,8 +32,6 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
 
     private val layoutInflater = LayoutInflater.from(context)
 
-    private val horizontalPageTransformer = PageTransformer { _, _ -> }
-
     private val verticalPageTransformer = PageTransformer { view, position ->
         view.translationX = view.width * position * -1
         view.translationY = position * view.height
@@ -50,6 +48,8 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
 
     private var adjustedMotionEvent: (MotionEvent) -> MotionEvent = horizontalMotionEventHandler
 
+    private val viewHolder = mutableSetOf<View>()
+
     private val adapter = object : PagerAdapter() {
 
         override fun isViewFromObject(p0: View, p1: Any): Boolean = p0 === p1
@@ -58,7 +58,7 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
             val view = layoutInflater.inflate(R.layout.pdf_view_item, container, false)
-
+            viewHolder.add(view)
             val imageView = view.findViewById<ImageView>(R.id.imageView)
             val progressBar = view.findViewById<View>(R.id.progressBar)
             val layoutObserver = object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -73,7 +73,10 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
         }
 
         override fun destroyItem(container: ViewGroup, position: Int, item: Any) {
-            container.removeView(item as View)
+            (item as? View)?.let {
+                viewHolder.remove(item)
+                container.removeView(item)
+            } ?: throw IllegalArgumentException("item parameter was expected to be a View, got $item instead.")
         }
     }
 
@@ -110,7 +113,12 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
     private fun onOrientationSet() {
         val (pageTransformer, motionEventTransformer) = when (orientation) {
             PdfViewOrientation.HORIZONTAL -> {
-                horizontalPageTransformer to horizontalMotionEventHandler
+                // resets translation eventually applied by vertical page transformer
+                viewHolder.forEach {
+                    it.translationY = 0f
+                    it.translationX = 0f
+                }
+                null to horizontalMotionEventHandler
             }
             PdfViewOrientation.VERTICAL -> {
                 verticalPageTransformer to verticalMotionEventHandler

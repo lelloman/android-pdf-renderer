@@ -1,6 +1,7 @@
 package com.lelloman.pdfrenderer
 
 import android.content.Context
+import android.support.annotation.MainThread
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -15,6 +16,7 @@ class PdfView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs) {
 
     var document = PdfDocument.STUB
+        @MainThread
         set(value) {
             if (field == value) return
             field = value
@@ -22,13 +24,15 @@ class PdfView @JvmOverloads constructor(
         }
 
     var style: PdfViewStyle = PdfViewStyle.PAGED
+        @MainThread
         set(value) {
             if (value == field) return
             field = value
             onStyleChanged()
         }
 
-    var orientation = PdfViewOrientation.VERTICAL
+    var orientation = PdfViewOrientation.HORIZONTAL
+        @MainThread
         set(value) {
             field = value
             scrolled.orientation = value
@@ -60,6 +64,7 @@ class PdfView @JvmOverloads constructor(
         onStyleChanged()
     }
 
+    @MainThread
     fun showPage(pageIndex: Int) {
         activePdfView.showPage(pageIndex)
     }
