@@ -43,6 +43,7 @@ class PdfViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
         setContentView(R.layout.activity_pdf)
+        window.decorView.keepScreenOn = true
         pdfView.document = document
 
     }
