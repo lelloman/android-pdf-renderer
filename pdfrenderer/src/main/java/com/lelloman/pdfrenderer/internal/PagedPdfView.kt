@@ -130,7 +130,9 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
 
     private fun renderPageIntoImageView(pageIndex: Int, container: View, imageView: ImageView, progressBar: View) =
         Single
-            .fromCallable {
+            .just(container.width to container.height)
+            .filter { it.first > 0 && it.second > 0 }
+            .map {
                 Bitmap.createBitmap(container.width, container.height, Bitmap.Config.ARGB_8888).apply {
                     pdfDocument?.render(this, pageIndex)
                 }
@@ -148,8 +150,10 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
     override fun setPdfDocument(pdfDocument: PdfDocument) {
         this.pdfDocument = pdfDocument
         adapter.notifyDataSetChanged()
-        setCurrentItem(0, false)
-        visiblePageSubject.onNext(0)
+        if (pdfDocument.pageCount > 0) {
+            setCurrentItem(0, false)
+            visiblePageSubject.onNext(0)
+        }
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {

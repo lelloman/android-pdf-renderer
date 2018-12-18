@@ -52,7 +52,10 @@ class PdfView @JvmOverloads constructor(
     }
 
     val visiblePage: Flowable<Int> = Flowable
-        .merge(paged.visiblePage, scrolled.visiblePage)
+        .merge(
+            paged.visiblePage.filter { style == PdfViewStyle.PAGED },
+            scrolled.visiblePage.filter { style == PdfViewStyle.SCROLLED }
+        )
         .distinctUntilChanged()
 
     private var activePdfView: InternalPdfView = paged
