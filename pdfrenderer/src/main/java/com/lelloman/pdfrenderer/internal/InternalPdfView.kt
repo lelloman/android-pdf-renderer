@@ -17,7 +17,7 @@ internal interface InternalPdfView {
     fun showPage(pageIndex: Int)
 
     companion object {
+        const val DEFAULT_IS_REVERSED = false
         val DEFAULT_ORIENTATION = PdfViewOrientation.HORIZONTAL
-        val DEFAULT_IS_REVERSED = false
     }
 }
