@@ -27,7 +27,7 @@ class PdfViewActivity : AppCompatActivity() {
         val pdfFile = File(filesDir, "ppp.pdf")
         if (pdfFile.exists()) pdfFile.delete()
         if (!pdfFile.exists()) {
-            assets.open("test.pdf").buffered().copyTo(pdfFile.outputStream())
+            assets.open("liszt_annee_1.pdf.pdf").buffered().copyTo(pdfFile.outputStream())
         }
         PdfDocumentFactory.make(
             ParcelFileDescriptor.open(
