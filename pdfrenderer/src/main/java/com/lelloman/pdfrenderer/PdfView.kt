@@ -34,9 +34,19 @@ class PdfView @JvmOverloads constructor(
     var orientation = PdfViewOrientation.HORIZONTAL
         @MainThread
         set(value) {
+            if (value == field) return
             field = value
             scrolled.orientation = value
             paged.orientation = value
+        }
+
+    var isReversed = false
+        @MainThread
+        set(value) {
+            if (value == field) return
+            field = value
+            scrolled.isReversed = value
+            paged.isReversed = value
         }
 
     private val paged = PagedPdfView(context).apply {

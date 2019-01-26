@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import android.widget.ToggleButton
 import com.lelloman.pdfrenderer.PdfDocumentFactory
 import com.lelloman.pdfrenderer.PdfView
 import com.lelloman.pdfrenderer.PdfViewOrientation
@@ -27,7 +28,7 @@ class PdfViewActivity : AppCompatActivity() {
         val pdfFile = File(filesDir, "ppp.pdf")
         if (pdfFile.exists()) pdfFile.delete()
         if (!pdfFile.exists()) {
-            assets.open("liszt_annee_1.pdf.pdf").buffered().copyTo(pdfFile.outputStream())
+            assets.open("test.pdf").buffered().copyTo(pdfFile.outputStream())
         }
         PdfDocumentFactory.make(
             ParcelFileDescriptor.open(
@@ -83,6 +84,13 @@ class PdfViewActivity : AppCompatActivity() {
                     pdfView.style = it
                 }
         )
+        subscriptions.add(toolbarController
+            .isReversed
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                pdfView.isReversed = it
+            }
+        )
     }
 
     override fun onStop() {
@@ -105,11 +113,16 @@ class PdfViewActivity : AppCompatActivity() {
         private val scrolledTextView = findViewById<View>(R.id.textViewScrolled)
         private val pagedTextView = findViewById<View>(R.id.textViewPaged)
 
+        private val isReversedToggleButton = findViewById<ToggleButton>(R.id.toggleButtonIsReversed)
+
         private val orientationSubject = BehaviorSubject
             .createDefault(this@PdfViewActivity.pdfView.orientation)
 
         private val styleSubject = BehaviorSubject
             .createDefault(this@PdfViewActivity.pdfView.style)
+
+        private val isReversedSubject = BehaviorSubject
+            .createDefault(this@PdfViewActivity.pdfView.isReversed)
 
         val orientation: Flowable<PdfViewOrientation> = orientationSubject
             .hide()
@@ -129,11 +142,22 @@ class PdfViewActivity : AppCompatActivity() {
                 scrolledTextView.alpha = if (it == PdfViewStyle.SCROLLED) 1f else .4f
             }
 
+        val isReversed: Flowable<Boolean> = isReversedSubject
+            .hide()
+            .toFlowable(BackpressureStrategy.LATEST)
+            .distinctUntilChanged()
+            .doOnNext {
+                isReversedToggleButton.isChecked = it
+            }
+
         init {
             verticalImageView.setOnClickListener { orientationSubject.onNext(PdfViewOrientation.VERTICAL) }
             horizontalImageView.setOnClickListener { orientationSubject.onNext(PdfViewOrientation.HORIZONTAL) }
             pagedTextView.setOnClickListener { styleSubject.onNext(PdfViewStyle.PAGED) }
             scrolledTextView.setOnClickListener { styleSubject.onNext(PdfViewStyle.SCROLLED) }
+            isReversedToggleButton.setOnCheckedChangeListener { buttonView, isChecked ->
+                isReversedSubject.onNext(isChecked)
+            }
         }
 
         @SuppressLint("SetTextI18n")

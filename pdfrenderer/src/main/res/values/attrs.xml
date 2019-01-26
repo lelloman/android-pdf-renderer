@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="InternalPdfView">
+    <declare-styleable name="PdfView">
         <attr name="orientation" format="enum">
             <enum name="horizontal" value="0"/>
             <enum name="vertical" value="1"/>
         </attr>
+        <attr name="isReversed" format="boolean" />
     </declare-styleable>
 </resources>

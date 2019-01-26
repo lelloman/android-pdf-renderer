@@ -61,6 +61,12 @@ internal class ScrolledPdfView(context: Context) : RecyclerView(context), Intern
         }
     }
 
+    override var isReversed: Boolean = InternalPdfView.DEFAULT_IS_REVERSED
+    set(value){
+        field = value
+        linearLayoutManger.reverseLayout = value
+    }
+
     private val linearLayoutManger = LinearLayoutManager(context, orientation.asLayoutManagerValue(), false)
 
     init {
@@ -89,7 +95,11 @@ internal class ScrolledPdfView(context: Context) : RecyclerView(context), Intern
             }
             (edgeLength / 2 + offset) / edgeLength
         }
-        visiblePageSubject.onNext(item)
+        visiblePageSubject.onNext(if(isReversed) {
+            (pageCount - 1) - item
+        } else {
+            item
+        })
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
