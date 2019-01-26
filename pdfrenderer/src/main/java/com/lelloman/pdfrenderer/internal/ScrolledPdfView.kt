@@ -152,7 +152,7 @@ internal class ScrolledPdfView(context: Context) : RecyclerView(context), Intern
             itemPosition = position
             val subscription = targetSize
                 .filter(Size::hasSurface)
-                .delay(500, TimeUnit.MILLISECONDS)
+                .delay(250, TimeUnit.MILLISECONDS)
                 .map {
                     obtainBitmap(it).apply { pdfDocument?.render(this, itemPosition) }
                 }
