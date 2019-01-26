@@ -19,7 +19,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.BehaviorSubject
 import java.io.File
 
-class PdfViewActivity : AppCompatActivity() {
+class ControlsViewPdfViewActivity : AppCompatActivity() {
 
     private val pdfView by lazy { findViewById<PdfView>(R.id.pdfView) }
     private val subscriptions = CompositeDisposable()
@@ -43,7 +43,7 @@ class PdfViewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
-        setContentView(R.layout.activity_pdf)
+        setContentView(R.layout.activity_controls_view_pdf_view)
         window.decorView.keepScreenOn = true
         pdfView.document = document
 
@@ -116,13 +116,13 @@ class PdfViewActivity : AppCompatActivity() {
         private val isReversedToggleButton = findViewById<ToggleButton>(R.id.toggleButtonIsReversed)
 
         private val orientationSubject = BehaviorSubject
-            .createDefault(this@PdfViewActivity.pdfView.orientation)
+            .createDefault(this@ControlsViewPdfViewActivity.pdfView.orientation)
 
         private val styleSubject = BehaviorSubject
-            .createDefault(this@PdfViewActivity.pdfView.style)
+            .createDefault(this@ControlsViewPdfViewActivity.pdfView.style)
 
         private val isReversedSubject = BehaviorSubject
-            .createDefault(this@PdfViewActivity.pdfView.isReversed)
+            .createDefault(this@ControlsViewPdfViewActivity.pdfView.isReversed)
 
         val orientation: Flowable<PdfViewOrientation> = orientationSubject
             .hide()

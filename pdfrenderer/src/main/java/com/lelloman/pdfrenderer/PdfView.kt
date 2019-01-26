@@ -49,16 +49,20 @@ class PdfView @JvmOverloads constructor(
             paged.isReversed = value
         }
 
-    private val paged = PagedPdfView(context).apply {
-        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        orientation = this@PdfView.orientation
-        visibility = GONE
+    private val paged by lazy {
+        PagedPdfView(context).apply {
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            orientation = this@PdfView.orientation
+            visibility = GONE
+        }
     }
 
-    private val scrolled = ScrolledPdfView(context).apply {
-        layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        orientation = this@PdfView.orientation
-        visibility = GONE
+    private val scrolled by lazy {
+        ScrolledPdfView(context).apply {
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            orientation = this@PdfView.orientation
+            visibility = GONE
+        }
     }
 
     val visiblePage: Flowable<Int> = Flowable
@@ -72,6 +76,34 @@ class PdfView @JvmOverloads constructor(
     private val activeView get() = activePdfView as View
 
     init {
+        var styleFromAttrs: PdfViewStyle? = null
+        var orientationFromAttrs: PdfViewOrientation? = null
+        var isReversedFromAttrs: Boolean? = null
+
+        context.theme.obtainStyledAttributes(
+            attrs, R.styleable.PdfView, 0, 0
+        ).apply {
+            try {
+                styleFromAttrs = getInt(R.styleable.PdfView_pdfViewStyle, -1).let { attrValue ->
+                    PdfViewStyle.values().firstOrNull { it.attrValue == attrValue }
+                }
+                orientationFromAttrs = getInt(R.styleable.PdfView_pdfViewOrientation, -1).let { attrValue ->
+                    PdfViewOrientation.values().firstOrNull { it.attrValue == attrValue }
+                }
+                isReversedFromAttrs = if (hasValue(R.styleable.PdfView_pdfViewIsReversed)) {
+                    getBoolean(R.styleable.PdfView_pdfViewIsReversed, false)
+                } else {
+                    null
+                }
+            } finally {
+                recycle()
+            }
+        }
+
+        styleFromAttrs?.let { style = it }
+        orientationFromAttrs?.let { orientation = it }
+        isReversedFromAttrs?.let { isReversed = it }
+
         addView(paged)
         addView(scrolled)
         onStyleChanged()
