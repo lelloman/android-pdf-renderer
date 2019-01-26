@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="PdfView">
-        <attr name="orientation" format="enum">
+        <attr name="pdfViewOrientation" format="enum">
             <enum name="horizontal" value="0"/>
             <enum name="vertical" value="1"/>
         </attr>
-        <attr name="isReversed" format="boolean" />
+        <attr name="pdfViewStyle" format="enum">
+            <enum name="paged" value="0" />
+            <enum name="scrolled" value="1" />
+        </attr>
+        <attr name="pdfViewIsReversed" format="boolean" />
     </declare-styleable>
 </resources>
