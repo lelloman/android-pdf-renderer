@@ -1,6 +1,5 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
@@ -60,17 +59,14 @@ class StaticAttrsPdfViewActivity : AppCompatActivity() {
         private const val EXTRA_STYLE = "Style"
         private const val EXTRA_ORIENTATION = "Orientation"
 
-        fun start(
-            activity: Activity,
+        fun makeStartIntent(
             isReversed: Boolean = DEFAULT_IS_REVERSED,
             style: PdfViewStyle = DEFAULT_STYLE,
             orientation: PdfViewOrientation = DEFAULT_ORIENTATION
-        ) = Intent(activity, StaticAttrsPdfViewActivity::class.java)
-            .apply {
-                putExtra(EXTRA_IS_REVERSED, isReversed)
-                putExtra(EXTRA_STYLE, style.name)
-                putExtra(EXTRA_ORIENTATION, orientation.name)
-            }
-            .let(activity::startActivity)
+        ) = Intent().apply {
+            putExtra(EXTRA_IS_REVERSED, isReversed)
+            putExtra(EXTRA_STYLE, style.name)
+            putExtra(EXTRA_ORIENTATION, orientation.name)
+        }
     }
 }
