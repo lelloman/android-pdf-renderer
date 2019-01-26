@@ -22,13 +22,13 @@ import io.reactivex.subjects.BehaviorSubject
 
 internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfView {
 
-    override var orientation = PdfViewOrientation.HORIZONTAL
+    override var orientation = InternalPdfView.DEFAULT_ORIENTATION
         set(value) {
             field = value
             onOrientationSet()
         }
 
-    private var pdfDocument: PdfDocument? = null
+    private var pdfDocument: PdfDocument = PdfDocument.STUB
 
     private val layoutInflater = LayoutInflater.from(context)
 
@@ -54,25 +54,41 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
 
         override fun isViewFromObject(p0: View, p1: Any): Boolean = p0 === p1
 
-        override fun getCount() = pdfDocument?.pageCount ?: 0
+        override fun getCount() = pdfDocument.pageCount
 
         override fun instantiateItem(container: ViewGroup, position: Int): Any {
+            val pdfPageIndex = if (isReversed) {
+                (count - 1) - position
+            } else {
+                position
+            }
             val view = layoutInflater.inflate(R.layout.pdf_view_item, container, false)
             viewHolder.add(view)
             val imageView = view.findViewById<ImageView>(R.id.imageView)
             val progressBar = view.findViewById<View>(R.id.progressBar)
             val layoutObserver = object : ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
-                    renderPageIntoImageView(position, view, imageView, progressBar)
+                    renderPageIntoImageView(pdfPageIndex, view, imageView, progressBar)
                     view.viewTreeObserver.removeOnGlobalLayoutListener(this)
                 }
             }
             view.viewTreeObserver.addOnGlobalLayoutListener(layoutObserver)
             container.addView(view)
+            view.tag = pdfPageIndex
             return view
         }
 
-        override fun destroyItem(container: ViewGroup, position: Int, item: Any) {
+        override fun getItemPosition(item: Any): Int {
+            val pdfPageIndex = (item as? View)?.tag as? Int ?: return PagerAdapter.POSITION_NONE
+
+            return if(isReversed) {
+                (count - 1) - pdfPageIndex
+            } else {
+                pdfPageIndex
+            }
+        }
+
+        override fun destroyItem(container: ViewGroup, originalPosition: Int, item: Any) {
             (item as? View)?.let {
                 viewHolder.remove(item)
                 container.removeView(item)
@@ -87,6 +103,12 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
         .toFlowable(BackpressureStrategy.LATEST)
         .distinctUntilChanged()
 
+    override var isReversed: Boolean = InternalPdfView.DEFAULT_IS_REVERSED
+        set(value) {
+            field = value
+            adapter.notifyDataSetChanged()
+        }
+
     init {
         offscreenPageLimit = 2
         setAdapter(adapter)
@@ -98,7 +120,11 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
             }
 
             override fun onPageSelected(pageIndex: Int) {
-                visiblePageSubject.onNext(pageIndex)
+                visiblePageSubject.onNext(if(isReversed) {
+                    (pdfDocument.pageCount - 1) - pageIndex
+                } else {
+                    pageIndex
+                })
             }
         })
 
@@ -134,7 +160,7 @@ internal class PagedPdfView(context: Context) : ViewPager(context), InternalPdfV
             .filter { it.first > 0 && it.second > 0 }
             .map {
                 Bitmap.createBitmap(container.width, container.height, Bitmap.Config.ARGB_8888).apply {
-                    pdfDocument?.render(this, pageIndex)
+                    pdfDocument.render(this, pageIndex)
                 }
             }
             .subscribeOn(Schedulers.newThread())
