@@ -4,17 +4,16 @@ import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
-import android.os.ParcelFileDescriptor
 import com.lelloman.pdfrenderer.PdfDocument
-import com.lelloman.pdfrenderer.PdfDocumentFactory
 import com.lelloman.pdfrenderer.PdfViewOrientation
 import com.lelloman.pdfrenderer.PdfViewStyle
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import java.io.File
+import io.reactivex.disposables.Disposable
 
-class PdfViewViewModel : ViewModel() {
+class PdfViewViewModel(
+    pdfDocumentProvider: PdfDocumentProvider
+) : ViewModel() {
 
     private val mutableOrientation = MutableLiveData<PdfViewOrientation>().apply {
         value = PdfViewOrientation.HORIZONTAL
@@ -58,18 +57,10 @@ class PdfViewViewModel : ViewModel() {
 
     val currentPageString: LiveData<String> = mutableCurrentPageString
 
-    private val subscriptions = CompositeDisposable()
+    private var visiblePageChangeSubscription: Disposable? = null
 
-    fun loadPdfDocument(pdfFile: File) {
-        pdfDocument.value?.dispose()
-        PdfDocumentFactory
-            .make(
-                ParcelFileDescriptor.open(
-                    pdfFile,
-                    ParcelFileDescriptor.MODE_READ_ONLY
-                )
-            )
-            .let(mutablePdfDocument::postValue)
+    init {
+        mutablePdfDocument.postValue(pdfDocumentProvider.providePdfDocument())
     }
 
     fun onVerticalOrientationClicked() {
@@ -93,23 +84,22 @@ class PdfViewViewModel : ViewModel() {
     }
 
     fun observeVisiblePageChanges(visiblePageChanges: Flowable<Int>) {
-        subscriptions.add(
-            visiblePageChanges
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { pageIndex ->
-                    if (pageIndex != null) {
-                        mutableCurrentPageString.postValue("${pageIndex + 1}/${pdfDocument.value?.pageCount ?: 0}")
-                    }
+        visiblePageChangeSubscription?.dispose()
+        visiblePageChangeSubscription = visiblePageChanges
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { pageIndex ->
+                if (pageIndex != null) {
+                    mutableCurrentPageString.postValue("${pageIndex + 1}/${pdfDocument.value?.pageCount ?: 0}")
                 }
-        )
+            }
     }
 
     override fun onCleared() {
         super.onCleared()
         pdfDocument.value?.dispose()
-        subscriptions.clear()
+        visiblePageChangeSubscription?.dispose()
     }
-    
+
     private companion object {
         const val ALPHA_SELECTED = 1.0f
         const val ALPHA_NOT_SELECTED = 0.4f

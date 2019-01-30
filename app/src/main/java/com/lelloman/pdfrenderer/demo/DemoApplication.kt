@@ -1,42 +1,26 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.app.Activity
 import android.app.Application
-import android.arch.lifecycle.ViewModelProviders
-import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import android.content.Context
+import org.koin.android.ext.android.startKoin
+import org.koin.android.viewmodel.ext.koin.viewModel
+import org.koin.dsl.module.module
 
-open class DemoApplication : Application() {
+class DemoApplication : Application() {
 
-    protected open fun provideControlsViewPdfViewActivityViewModel(activity: AppCompatActivity) : PdfViewViewModel =
-        ViewModelProviders.of(activity, null).get(PdfViewViewModel::class.java)
+    private val appModule = module {
+
+        factory { pdfDocumentProvider(get()) }
+
+        viewModel { PdfViewViewModel(get()) }
+    }
 
     override fun onCreate() {
         super.onCreate()
-        registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
-                if(activity is PdfViewActivity) {
-                    activity.viewModel = provideControlsViewPdfViewActivityViewModel(activity)
-                }
-            }
+        startKoin(this, listOf(appModule))
+    }
 
-            override fun onActivityStarted(activity: Activity?) {
-            }
-
-            override fun onActivityResumed(activity: Activity?) {
-            }
-
-            override fun onActivityPaused(activity: Activity?) {
-            }
-
-            override fun onActivityStopped(activity: Activity?) {
-            }
-
-            override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
-            }
-
-            override fun onActivityDestroyed(activity: Activity?) {
-            }
-        })
+    companion object {
+        var pdfDocumentProvider: (context: Context) -> PdfDocumentProvider = ::PdfDocumentProviderImpl
     }
 }
