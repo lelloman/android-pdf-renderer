@@ -17,6 +17,11 @@ android {
         enabled = true
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -35,14 +40,15 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
     implementation "io.reactivex.rxjava2:rxjava:2.2.6"
 
+    implementation "org.koin:koin-android:1.0.2"
+    implementation "org.koin:koin-android-viewmodel:1.0.2"
+
     implementation project(":pdfrenderer")
 //    implementation 'com.github.lelloman:android-pdf-renderer:master-SNAPSHOT'
 
     testImplementation 'junit:junit:4.12'
 
-    androidTestImplementation "com.android.support.test:runner:$test_support_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
-    androidTestImplementation "com.android.support.test:rules:$test_support_version"
+    androidTestImplementation "com.github.lelloman:android-instrumented-tests-utils:f8dbd087b8"
 }
 
 repositories {
