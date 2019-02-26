@@ -1,7 +1,7 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.support.test.espresso.matcher.BoundedMatcher
 import android.view.View
+import androidx.test.espresso.matcher.BoundedMatcher
 import com.lelloman.pdfrenderer.PdfView
 import com.lelloman.pdfrenderer.PdfViewOrientation
 import com.lelloman.pdfrenderer.PdfViewStyle

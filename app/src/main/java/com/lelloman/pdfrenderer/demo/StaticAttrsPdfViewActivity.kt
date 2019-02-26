@@ -3,7 +3,7 @@ package com.lelloman.pdfrenderer.demo
 import android.content.Intent
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.lelloman.pdfrenderer.PdfDocumentFactory
 import com.lelloman.pdfrenderer.PdfView
 import com.lelloman.pdfrenderer.PdfViewOrientation

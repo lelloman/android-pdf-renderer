@@ -1,8 +1,8 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import com.lelloman.pdfrenderer.demo.databinding.ActivityPdfViewBinding
 import org.koin.android.ext.android.inject
 
@@ -19,6 +19,6 @@ class PdfViewActivity : AppCompatActivity() {
         window.decorView.keepScreenOn = true
         viewModel.observeVisiblePageChanges(binding.pdfView.visiblePage)
         binding.viewModel = viewModel
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
     }
 }

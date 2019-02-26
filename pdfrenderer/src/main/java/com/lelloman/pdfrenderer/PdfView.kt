@@ -1,10 +1,10 @@
 package com.lelloman.pdfrenderer
 
 import android.content.Context
-import android.support.annotation.MainThread
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.annotation.MainThread
 import com.lelloman.pdfrenderer.internal.InternalPdfView
 import com.lelloman.pdfrenderer.internal.PagedPdfView
 import com.lelloman.pdfrenderer.internal.ScrolledPdfView
