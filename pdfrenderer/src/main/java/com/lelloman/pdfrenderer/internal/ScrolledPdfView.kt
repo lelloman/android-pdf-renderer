@@ -2,12 +2,12 @@ package com.lelloman.pdfrenderer.internal
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.lelloman.pdfrenderer.PdfDocument
 import com.lelloman.pdfrenderer.PdfViewOrientation
 import com.lelloman.pdfrenderer.R

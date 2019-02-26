@@ -1,11 +1,10 @@
 package com.lelloman.pdfrenderer.demo
 
-import android.support.test.espresso.Espresso.onView
-import android.support.test.espresso.action.ViewActions.click
-import android.support.test.espresso.matcher.ViewMatchers.withId
-import android.support.test.espresso.matcher.ViewMatchers.withText
-import android.support.test.rule.ActivityTestRule
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.rule.ActivityTestRule
 import com.lelloman.instrumentedtestutils.ViewActions.swipeLeft
 import com.lelloman.instrumentedtestutils.ViewActions.swipeRight
 import com.lelloman.instrumentedtestutils.checkMatches
@@ -17,10 +16,8 @@ import com.lelloman.pdfrenderer.PdfViewStyle
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito.*
 
-@RunWith(AndroidJUnit4::class)
 class PdfViewActivityTest {
 
     private open class SypablePdfDocument(pdfDocument: PdfDocument) : PdfDocument by pdfDocument

@@ -3,12 +3,12 @@ package com.lelloman.pdfrenderer.internal
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.support.v4.view.PagerAdapter
-import android.support.v4.view.ViewPager
-import android.support.v4.view.ViewPager.PageTransformer
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
+import androidx.viewpager.widget.PagerAdapter
+import androidx.viewpager.widget.ViewPager
+import androidx.viewpager.widget.ViewPager.PageTransformer
 import com.lelloman.pdfrenderer.PdfDocument
 import com.lelloman.pdfrenderer.PdfViewOrientation
 import com.lelloman.pdfrenderer.R
